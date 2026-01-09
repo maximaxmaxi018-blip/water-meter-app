@@ -14,6 +14,42 @@ const QUICK_QUESTIONS = [
 ];
 
 const KONSTANTIN_AVATAR = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=150&h=150&auto=format&fit=crop';
+const KONSTANTIN_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjMzc0MUZGIi8+Cjx0ZXh0IHg9Ijc1IiB5PSI4NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPks8L3RleHQ+Cjwvc3ZnPg==';
+
+const AvatarImage: React.FC<{ src: string; alt: string; className?: string }> = ({ src, alt, className = '' }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      if (src === KONSTANTIN_AVATAR) {
+        setImgSrc(KONSTANTIN_FALLBACK);
+      } else {
+        // Для других изображений показываем инициалы
+        setImgSrc('');
+      }
+    }
+  };
+
+  if (!imgSrc || hasError) {
+    return (
+      <div className={`bg-primary-600 flex items-center justify-center text-white font-bold ${className}`}>
+        {alt === 'K' || alt === 'Konstantin' ? 'К' : alt.charAt(0)}
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={imgSrc} 
+      alt={alt} 
+      className={className}
+      onError={handleError}
+      loading="lazy"
+    />
+  );
+};
 
 const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -156,7 +192,7 @@ const ChatBot: React.FC = () => {
           <div className="bg-primary-600 p-4 text-white flex justify-between items-center shrink-0">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-primary-500/30">
-                <img src={KONSTANTIN_AVATAR} alt="Konstantin" className="w-full h-full object-cover" />
+                <AvatarImage src={KONSTANTIN_AVATAR} alt="Konstantin" className="w-full h-full object-cover" />
               </div>
               <div>
                 <span className="font-semibold block leading-none text-white">Константин</span>
@@ -178,7 +214,7 @@ const ChatBot: React.FC = () => {
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'assistant' && (
                   <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-auto mb-1 shrink-0 border border-gray-200 dark:border-gray-600">
-                    <img src={KONSTANTIN_AVATAR} alt="K" className="w-full h-full object-cover" />
+                    <AvatarImage src={KONSTANTIN_AVATAR} alt="K" className="w-full h-full object-cover" />
                   </div>
                 )}
                 <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap ${
@@ -193,7 +229,7 @@ const ChatBot: React.FC = () => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-auto mb-1 shrink-0 border border-gray-200 dark:border-gray-600">
-                  <img src={KONSTANTIN_AVATAR} alt="K" className="w-full h-full object-cover opacity-50" />
+                  <AvatarImage src={KONSTANTIN_AVATAR} alt="K" className="w-full h-full object-cover opacity-50" />
                 </div>
                 <div className="bg-white dark:bg-gray-700 p-3 rounded-2xl rounded-bl-none border border-gray-100 dark:border-gray-600">
                   <div className="flex space-x-1">
@@ -257,7 +293,7 @@ const ChatBot: React.FC = () => {
             <i className="fas fa-chevron-down text-2xl text-white"></i>
           ) : (
             <div className="w-full h-full p-1 relative">
-               <img src={KONSTANTIN_AVATAR} alt="K" className={`w-full h-full object-cover rounded-xl ${isOnline ? '' : 'grayscale'}`} />
+               <AvatarImage src={KONSTANTIN_AVATAR} alt="K" className={`w-full h-full object-cover rounded-xl ${isOnline ? '' : 'grayscale'}`} />
                <div className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-primary-600 animate-pulse ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></div>
                {!isOnline && <i className="fas fa-wifi-slash absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-xl drop-shadow-md"></i>}
             </div>

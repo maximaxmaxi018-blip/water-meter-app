@@ -45,6 +45,46 @@ const LandingPage: React.FC<LandingPageProps> = ({
     'https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=150&h=150&auto=format&fit=crop'
   ];
 
+  const AvatarImage: React.FC<{ src: string; alt: string; index: number }> = ({ src, alt, index }) => {
+    const [hasError, setHasError] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    const handleError = () => {
+      setHasError(true);
+    };
+
+    const handleLoad = () => {
+      setIsLoaded(true);
+    };
+
+    if (hasError) {
+      const initials = ['АП', 'МС', 'ИВ', 'ЕН'][index] || 'АБ';
+      return (
+        <div className="w-full h-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
+          {initials}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {!isLoaded && (
+          <div className="w-full h-full bg-gray-300 dark:bg-gray-700 animate-pulse flex items-center justify-center">
+            <i className="fas fa-user text-gray-400 text-xs"></i>
+          </div>
+        )}
+        <img 
+          src={src} 
+          alt={alt} 
+          className={`w-full h-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onError={handleError}
+          onLoad={handleLoad}
+          loading="lazy"
+        />
+      </>
+    );
+  };
+
   const getNewsTypeStyles = (type: string) => {
     switch(type) {
       case 'emergency': return 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400';
@@ -120,7 +160,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
               <div className="flex -space-x-3">
                 {avatarUrls.map((url, i) => (
                   <div key={i} className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-900 bg-gray-200 dark:bg-gray-800 flex items-center justify-center overflow-hidden shadow-md">
-                    <img src={url} alt={`Абонент ${i + 1}`} className="w-full h-full object-cover" />
+                    <AvatarImage src={url} alt={`Абонент ${i + 1}`} index={i} />
                   </div>
                 ))}
               </div>
