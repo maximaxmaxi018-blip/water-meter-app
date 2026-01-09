@@ -22,12 +22,12 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://water-meter-app-production.up.railway.app",
+    "VITE_API_URL": "https://water-meter-backend1.onrender.com",
     "VITE_API_KEY": "AIzaSyByIiReJxgKGGcOs_2v_i9a5fbF40X_JGc"
   },
   "build": {
     "env": {
-      "VITE_API_URL": "https://water-meter-app-production.up.railway.app",
+      "VITE_API_URL": "https://water-meter-backend1.onrender.com",
       "VITE_API_KEY": "AIzaSyByIiReJxgKGGcOs_2v_i9a5fbF40X_JGc"
     }
   }
