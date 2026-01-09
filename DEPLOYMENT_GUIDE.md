@@ -1,4 +1,4 @@
-# Развертывание проекта на Vercel + Railway
+# Развертывание проекта на GitHub Pages + Render
 
 ## Шаг 1: Подготовка GitHub репозитория
 
@@ -16,65 +16,114 @@ git remote add origin https://github.com/YOUR_USERNAME/water-meter-app.git
 git push -u origin main
 ```
 
-## Шаг 2: Развертывание бэкенда на Railway
+## Шаг 2: Развертывание бэкенда на Render
 
-1. Перейдите на https://railway.app
-2. Нажмите "New Project" → "Deploy from GitHub"
-3. Авторизуйтесь с GitHub
+1. Перейдите на https://render.com
+2. Нажмите "New" → "Web Service"
+3. Подключите ваш GitHub репозиторий
 4. Выберите ваш репозиторий `water-meter-app`
-5. Railway автоматически обнаружит Node.js проект
-6. Добавьте переменные окружения в Railway:
-   - `PORT`: 3000
-   - `NODE_ENV`: production
+5. Настройте параметры:
+   - **Name**: `water-meter-backend`
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+6. Добавьте переменные окружения:
+   - `NODE_ENV`: `production`
    - `JWT_SECRET`: (сгенерируйте случайную строку)
+7. Нажмите "Create Web Service"
+8. Скопируйте URL вашего бэкенда (например: `https://water-meter-backend.onrender.com`)
 
-7. Нажмите "Deploy"
-8. Скопируйте URL вашего бэкенда (например: `https://water-meter-app-production.up.railway.app`)
+## Шаг 3: Развертывание фронтенда на GitHub Pages
 
-## Шаг 3: Развертывание фронтенда на Vercel
+1. В вашем репозитории перейдите в Settings → Pages
+2. В разделе "Source" выберите "GitHub Actions"
+3. Создайте файл `.github/workflows/deploy.yml` в корне проекта:
 
-1. Перейдите на https://vercel.com
-2. Нажмите "New Project"
-3. Импортируйте ваш GitHub репозиторий
-4. Vercel автоматически обнаружит React проект
-5. В разделе "Environment Variables" добавьте:
-   - `VITE_API_URL`: (URL вашего бэкенда с Railway)
-   
-   Например: `https://water-meter-app-production.up.railway.app`
+```yaml
+name: Deploy to GitHub Pages
 
-6. Нажмите "Deploy"
-7. Дождитесь завершения развертывания
-8. Скопируйте URL вашего фронтенда (например: `https://water-meter-app.vercel.app`)
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-## Шаг 4: Обновление apiClient
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build
+      run: npm run build
+      env:
+        VITE_API_URL: https://water-meter-backend.onrender.com/api
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+```
 
-Убедитесь, что ваш `apiClient.ts` использует переменную окружения:
+4. Сделайте commit и push:
+```bash
+git add .
+git commit -m "Add GitHub Pages deployment"
+git push
+```
+
+5. Ваш сайт будет доступен по адресу: `https://YOUR_USERNAME.github.io/water-meter-app`
+
+## Шаг 4: Настройка базового пути для GitHub Pages
+
+Обновите `vite.config.ts` для корректной работы на GitHub Pages:
 
 ```typescript
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/water-meter-app/', // Замените на имя вашего репозитория
+  build: {
+    outDir: 'dist'
+  }
+})
 ```
 
 ## Шаг 5: Тестирование
 
-1. Откройте URL вашего фронтенда в браузере
+1. Откройте URL вашего фронтенда: `https://YOUR_USERNAME.github.io/water-meter-app`
 2. Проверьте, что приложение загружается
 3. Попробуйте войти с тестовыми учетными данными
 4. Проверьте, что данные загружаются с бэкенда
 
 ## Автоматическое развертывание
 
-После этого каждый раз, когда вы делаете `git push` в `main` ветку:
-- Railway автоматически перестроит и развернет бэкенд
-- Vercel автоматически перестроит и развернет фронтенд
+После этого каждый раз, когда вы делаете `git push` в ветку `main`:
+- Render автоматически перестроит и развернет бэкенд
+- GitHub Actions автоматически перестроит и развернет фронтенд на GitHub Pages
 
 ## Ссылка для тестирования
 
 Поделитесь этой ссылкой с людьми для тестирования:
 ```
-https://water-meter-app.vercel.app
+https://YOUR_USERNAME.github.io/water-meter-app
 ```
 
 ## Мониторинг
 
-- Railway: https://railway.app/dashboard
-- Vercel: https://vercel.com/dashboard
+- Render: https://dashboard.render.com
+- GitHub Actions: https://github.com/YOUR_USERNAME/water-meter-app/actions

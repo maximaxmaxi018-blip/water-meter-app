@@ -1,220 +1,236 @@
-# Автоматическое развертывание проекта на Vercel + Railway
-# PowerShell версия с улучшенной обработкой ошибок
+#!/usr/bin/env pwsh
+
+# Скрипт автоматического развертывания проекта
+# Бэкенд: Render.com, Фронтенд: GitHub Pages
 
 param(
-    [switch]$SkipInstall,
-    [switch]$Force,
-    [string]$BackendUrl
+    [Parameter(Mandatory=$true)]
+    [string]$GitHubUsername,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$RepoName,
+    
+    [Parameter(Mandatory=$false)]
+    [string]$RenderBackendUrl = ""
 )
 
-$ErrorActionPreference = "Stop"
+# Цвета для вывода
+$Green = "Green"
+$Red = "Red"
+$Yellow = "Yellow"
+$Blue = "Blue"
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "   Автоматическое развертывание проекта" -ForegroundColor Cyan
-Write-Host "   Frontend: Vercel" -ForegroundColor Cyan
-Write-Host "   Backend: Railway" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
-
-function Test-Command {
-    param($Command)
-    try {
-        Get-Command $Command -ErrorAction Stop | Out-Null
-        return $true
-    } catch {
-        return $false
-    }
+function Write-Step {
+    param([string]$Message)
+    Write-Host "🔄 $Message" -ForegroundColor $Blue
 }
 
-function Install-CLITools {
-    Write-Host "[1/6] Проверка установленных инструментов..." -ForegroundColor Yellow
-    
-    if (-not (Test-Command "vercel")) {
-        Write-Host "❌ Vercel CLI не установлен. Устанавливаем..." -ForegroundColor Red
-        npm install -g vercel
-        if ($LASTEXITCODE -ne 0) {
-            throw "Ошибка установки Vercel CLI"
-        }
-    }
-    
-    if (-not (Test-Command "railway")) {
-        Write-Host "❌ Railway CLI не установлен. Устанавливаем..." -ForegroundColor Red
-        npm install -g @railway/cli
-        if ($LASTEXITCODE -ne 0) {
-            throw "Ошибка установки Railway CLI"
-        }
-    }
-    
-    Write-Host "✅ Все инструменты установлены" -ForegroundColor Green
+function Write-Success {
+    param([string]$Message)
+    Write-Host "✅ $Message" -ForegroundColor $Green
 }
 
-function Install-Dependencies {
-    if ($SkipInstall) {
-        Write-Host "[2/6] Пропускаем установку зависимостей..." -ForegroundColor Yellow
-        return
-    }
-    
-    Write-Host "[2/6] Установка зависимостей..." -ForegroundColor Yellow
-    
-    Write-Host "📦 Устанавливаем зависимости frontend..." -ForegroundColor Blue
-    npm install
-    if ($LASTEXITCODE -ne 0) {
-        throw "Ошибка установки зависимостей frontend"
-    }
-    
-    Write-Host "📦 Устанавливаем зависимости backend..." -ForegroundColor Blue
-    Push-Location backend
-    try {
-        npm install
-        if ($LASTEXITCODE -ne 0) {
-            throw "Ошибка установки зависимостей backend"
-        }
-    } finally {
-        Pop-Location
-    }
-    
-    Write-Host "✅ Зависимости установлены" -ForegroundColor Green
+function Write-Error {
+    param([string]$Message)
+    Write-Host "❌ $Message" -ForegroundColor $Red
 }
 
-function Setup-Environment {
-    Write-Host "[3/6] Проверка переменных окружения..." -ForegroundColor Yellow
-    
-    if (-not (Test-Path ".env")) {
-        Write-Host "⚠️  Файл .env не найден. Создаем из примера..." -ForegroundColor Yellow
-        if (Test-Path ".env.example") {
-            Copy-Item ".env.example" ".env"
-        } else {
-            $envContent = "VITE_API_URL=http://localhost:3001`nVITE_GEMINI_API_KEY=your-gemini-api-key-here"
-            $envContent | Out-File -FilePath ".env" -Encoding UTF8
-        }
-        Write-Host "⚠️  Пожалуйста, отредактируйте файл .env" -ForegroundColor Yellow
-        if (-not $Force) {
-            notepad .env
-            Read-Host "Нажмите Enter после редактирования .env"
-        }
-    }
-    
-    if (-not (Test-Path "backend\.env")) {
-        Write-Host "⚠️  Файл backend\.env не найден. Создаем..." -ForegroundColor Yellow
-        $backendEnvContent = "PORT=3001`nJWT_SECRET=your-super-secret-jwt-key-here-$(Get-Random)`nNODE_ENV=production`nDATABASE_URL=./water_meter.db"
-        $backendEnvContent | Out-File -FilePath "backend\.env" -Encoding UTF8
-        
-        if (-not $Force) {
-            notepad "backend\.env"
-            Read-Host "Нажмите Enter после редактирования backend\.env"
-        }
-    }
-    
-    Write-Host "✅ Переменные окружения настроены" -ForegroundColor Green
+function Write-Warning {
+    param([string]$Message)
+    Write-Host "⚠️ $Message" -ForegroundColor $Yellow
 }
 
-function Deploy-Backend {
-    Write-Host "[4/6] Развертывание backend на Railway..." -ForegroundColor Yellow
-    
-    Push-Location backend
-    try {
-        Write-Host "🚂 Проверяем авторизацию в Railway..." -ForegroundColor Blue
-        $authStatus = railway whoami 2>$null
-        if ($LASTEXITCODE -ne 0 -or -not $authStatus) {
-            Write-Host "🚂 Требуется авторизация в Railway..." -ForegroundColor Blue
-            railway login
-            if ($LASTEXITCODE -ne 0) {
-                throw "Ошибка входа в Railway"
-            }
-        } else {
-            Write-Host "✅ Уже авторизованы в Railway как: $authStatus" -ForegroundColor Green
-        }
-        
-        Write-Host "🚂 Подключаемся к проекту или создаем новый..." -ForegroundColor Blue
-        railway link
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "🚂 Создаем новый проект..." -ForegroundColor Blue
-            railway init
-            if ($LASTEXITCODE -ne 0) {
-                throw "Ошибка создания проекта Railway"
-            }
-        }
-        
-        Write-Host "🚂 Деплоим backend..." -ForegroundColor Blue
-        railway up
-        if ($LASTEXITCODE -ne 0) {
-            throw "Ошибка деплоя backend"
-        }
-        
-        Write-Host "🚂 Получаем URL backend..." -ForegroundColor Blue
-        $backendUrl = railway domain 2>$null
-        if (-not $backendUrl -or $backendUrl -eq "") {
-            Write-Host "⚠️  Не удалось получить URL backend автоматически" -ForegroundColor Yellow
-            $backendUrl = Read-Host "Введите URL backend (например, https://your-app.railway.app)"
-        }
-        
-        return $backendUrl.Trim()
-    } finally {
-        Pop-Location
-    }
-}
-
-function Deploy-Frontend {
-    param($BackendUrl)
-    
-    Write-Host "[5/6] Настройка frontend для production..." -ForegroundColor Yellow
-    "VITE_API_URL=$BackendUrl" | Out-File -FilePath ".env.production" -Encoding UTF8
-    
-    Write-Host "[6/6] Развертывание frontend на Vercel..." -ForegroundColor Yellow
-    
-    Write-Host "🔺 Проверяем авторизацию в Vercel..." -ForegroundColor Blue
-    $vercelAuth = vercel whoami 2>$null
-    if ($LASTEXITCODE -ne 0 -or -not $vercelAuth) {
-        Write-Host "🔺 Требуется авторизация в Vercel..." -ForegroundColor Blue
-        vercel login
-        if ($LASTEXITCODE -ne 0) {
-            throw "Ошибка входа в Vercel"
-        }
-    } else {
-        Write-Host "✅ Уже авторизованы в Vercel как: $vercelAuth" -ForegroundColor Green
-    }
-    
-    Write-Host "🔺 Деплоим frontend..." -ForegroundColor Blue
-    vercel --prod --env "VITE_API_URL=$BackendUrl"
-    if ($LASTEXITCODE -ne 0) {
-        throw "Ошибка деплоя frontend"
-    }
-}
-
-# Основной процесс
-try {
-    Install-CLITools
-    Install-Dependencies
-    Setup-Environment
-    
-    if ($BackendUrl) {
-        $deployedBackendUrl = $BackendUrl
-        Write-Host "✅ Используем предоставленный Backend URL: $deployedBackendUrl" -ForegroundColor Green
-    } else {
-        $deployedBackendUrl = Deploy-Backend
-        Write-Host "✅ Backend развернут: $deployedBackendUrl" -ForegroundColor Green
-    }
-    
-    Deploy-Frontend -BackendUrl $deployedBackendUrl
-    
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Green
-    Write-Host "✅ Развертывание завершено успешно!" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "🔗 Backend URL: $deployedBackendUrl" -ForegroundColor Cyan
-    Write-Host "🔗 Frontend URL: Смотрите вывод Vercel выше" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "📝 Следующие шаги:" -ForegroundColor Yellow
-    Write-Host "1. Проверьте работу приложения" -ForegroundColor White
-    Write-Host "2. Настройте домен (опционально)" -ForegroundColor White
-    Write-Host "3. Настройте мониторинг" -ForegroundColor White
-    Write-Host "========================================" -ForegroundColor Green
-    
-} catch {
-    Write-Host ""
-    Write-Host "❌ Ошибка развертывания: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "Проверьте логи выше для получения подробной информации" -ForegroundColor Yellow
+# Проверка наличия Git
+Write-Step "Проверка наличия Git..."
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Error "Git не установлен. Установите Git и повторите попытку."
     exit 1
 }
+Write-Success "Git найден"
 
-Read-Host "Нажмите Enter для завершения"
+# Проверка наличия Node.js
+Write-Step "Проверка наличия Node.js..."
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+    Write-Error "Node.js не установлен. Установите Node.js и повторите попытку."
+    exit 1
+}
+Write-Success "Node.js найден"
+
+# Переход в директорию проекта
+$ProjectPath = "c:\Users\Макс\Desktop\Ладога Строй\Счетчик воды\Вариант 2"
+Set-Location $ProjectPath
+
+Write-Step "Инициализация Git репозитория..."
+if (-not (Test-Path ".git")) {
+    git init
+    Write-Success "Git репозиторий инициализирован"
+} else {
+    Write-Success "Git репозиторий уже существует"
+}
+
+# Создание .gitignore если не существует
+Write-Step "Создание .gitignore..."
+$GitIgnoreContent = @"
+node_modules/
+dist/
+.env
+.env.local
+.env.production
+*.log
+.DS_Store
+Thumbs.db
+"@
+
+if (-not (Test-Path ".gitignore")) {
+    $GitIgnoreContent | Out-File -FilePath ".gitignore" -Encoding UTF8
+    Write-Success ".gitignore создан"
+} else {
+    Write-Success ".gitignore уже существует"
+}
+
+# Создание GitHub Actions workflow
+Write-Step "Создание GitHub Actions workflow..."
+$WorkflowDir = ".github\workflows"
+if (-not (Test-Path $WorkflowDir)) {
+    New-Item -ItemType Directory -Path $WorkflowDir -Force | Out-Null
+}
+
+$BackendUrl = if ($RenderBackendUrl) { $RenderBackendUrl } else { "https://$RepoName-backend.onrender.com/api" }
+
+$WorkflowContent = @"
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build
+      run: npm run build
+      env:
+        VITE_API_URL: $BackendUrl
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: `${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+"@
+
+$WorkflowContent | Out-File -FilePath "$WorkflowDir\deploy.yml" -Encoding UTF8
+Write-Success "GitHub Actions workflow создан"
+
+# Обновление vite.config.ts
+Write-Step "Обновление vite.config.ts..."
+$ViteConfigContent = @"
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/$RepoName/',
+  build: {
+    outDir: 'dist'
+  }
+})
+"@
+
+$ViteConfigContent | Out-File -FilePath "vite.config.ts" -Encoding UTF8
+Write-Success "vite.config.ts обновлен"
+
+# Добавление всех файлов в Git
+Write-Step "Добавление файлов в Git..."
+git add .
+Write-Success "Файлы добавлены"
+
+# Создание коммита
+Write-Step "Создание коммита..."
+git commit -m "Initial commit with deployment configuration"
+Write-Success "Коммит создан"
+
+# Настройка удаленного репозитория
+Write-Step "Настройка удаленного репозитория..."
+$RemoteUrl = "https://github.com/$GitHubUsername/$RepoName.git"
+git branch -M main
+
+# Проверка существования remote origin
+$ExistingRemote = git remote get-url origin 2>$null
+if ($ExistingRemote) {
+    git remote set-url origin $RemoteUrl
+    Write-Success "Remote origin обновлен"
+} else {
+    git remote add origin $RemoteUrl
+    Write-Success "Remote origin добавлен"
+}
+
+# Push в GitHub
+Write-Step "Отправка кода в GitHub..."
+try {
+    git push -u origin main
+    Write-Success "Код отправлен в GitHub"
+} catch {
+    Write-Warning "Не удалось отправить код. Убедитесь, что:"
+    Write-Host "1. Репозиторий $RemoteUrl существует" -ForegroundColor $Yellow
+    Write-Host "2. У вас есть права на запись в репозиторий" -ForegroundColor $Yellow
+    Write-Host "3. Вы авторизованы в Git (git config user.name и user.email)" -ForegroundColor $Yellow
+}
+
+# Создание render.yaml для автоматического развертывания на Render
+Write-Step "Создание render.yaml..."
+$RenderConfigContent = @"
+services:
+  - type: web
+    name: $RepoName-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+"@
+
+$RenderConfigContent | Out-File -FilePath "render.yaml" -Encoding UTF8
+Write-Success "render.yaml создан"
+
+# Финальный коммит с render.yaml
+git add render.yaml
+git commit -m "Add render.yaml for automatic deployment"
+git push
+
+Write-Host "`n🎉 Развертывание настроено!" -ForegroundColor $Green
+Write-Host "`n📋 Следующие шаги:" -ForegroundColor $Blue
+Write-Host "1. Создайте репозиторий на GitHub: https://github.com/new" -ForegroundColor $Yellow
+Write-Host "   Имя репозитория: $RepoName" -ForegroundColor $Yellow
+Write-Host "`n2. Настройте Render.com:" -ForegroundColor $Yellow
+Write-Host "   - Перейдите на https://render.com" -ForegroundColor $Yellow
+Write-Host "   - New → Web Service" -ForegroundColor $Yellow
+Write-Host "   - Подключите репозиторий: $RemoteUrl" -ForegroundColor $Yellow
+Write-Host "`n3. Настройте GitHub Pages:" -ForegroundColor $Yellow
+Write-Host "   - Settings → Pages → Source: GitHub Actions" -ForegroundColor $Yellow
+Write-Host "`n4. Ваш сайт будет доступен по адресу:" -ForegroundColor $Yellow
+Write-Host "   https://$GitHubUsername.github.io/$RepoName" -ForegroundColor $Green
+
+Write-Host "`n🔗 Полезные ссылки:" -ForegroundColor $Blue
+Write-Host "GitHub репозиторий: $RemoteUrl" -ForegroundColor $Yellow
+Write-Host "Render Dashboard: https://dashboard.render.com" -ForegroundColor $Yellow
+Write-Host "GitHub Actions: https://github.com/$GitHubUsername/$RepoName/actions" -ForegroundColor $Yellow
