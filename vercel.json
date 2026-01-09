@@ -1,7 +1,8 @@
 {
-<<<<<<< HEAD
   "version": 2,
   "name": "water-meter-app",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "builds": [
     {
       "src": "package.json",
@@ -21,26 +22,13 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "@vite_api_url"
+    "VITE_API_URL": "https://water-meter-app-production.up.railway.app",
+    "VITE_API_KEY": "AIzaSyByIiReJxgKGGcOs_2v_i9a5fbF40X_JGc"
   },
   "build": {
     "env": {
-      "VITE_API_URL": "@vite_api_url"
+      "VITE_API_URL": "https://water-meter-app-production.up.railway.app",
+      "VITE_API_KEY": "AIzaSyByIiReJxgKGGcOs_2v_i9a5fbF40X_JGc"
     }
   }
 }
-=======
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "env": {
-    "VITE_API_URL": "@vite_api_url",
-    "VITE_API_KEY": "@vite_api_key"
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
-}
->>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19

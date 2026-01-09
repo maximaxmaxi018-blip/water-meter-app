@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = API_URL.includes('/api') ? API_URL : `${API_URL}/api`;
 
 // Типы ответов
 interface ApiResponse<T> {
@@ -42,7 +43,7 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers,
     });
