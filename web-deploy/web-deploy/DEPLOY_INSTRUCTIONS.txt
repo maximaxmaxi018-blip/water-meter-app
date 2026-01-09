@@ -1,0 +1,88 @@
+🚀 ИНСТРУКЦИИ ПО РАЗВЕРТЫВАНИЮ
+================================
+
+📋 ШАГ 1: ЗАГРУЗКА В GITHUB
+---------------------------
+1. Запустите один из файлов:
+   - upload-to-github.bat (для Windows Command Prompt)
+   - upload-to-github.ps1 (для PowerShell)
+
+2. Если Git не установлен:
+   - Скачайте с https://git-scm.com/download/win
+   - Установите с настройками по умолчанию
+   - Перезапустите командную строку
+
+3. При первом использовании Git настройте:
+   git config --global user.name "Ваше имя"
+   git config --global user.email "ваш@email.com"
+
+🔧 ШАГ 2: РАЗВЕРТЫВАНИЕ БЭКЕНДА (Railway)
+-----------------------------------------
+1. Перейдите на https://railway.app
+2. Войдите через GitHub
+3. Нажмите "New Project" → "Deploy from GitHub repo"
+4. Выберите репозиторий "ptk-water"
+5. В настройках проекта:
+   - Root Directory: backend
+   - Build Command: npm install
+   - Start Command: npm start
+
+6. Добавьте переменные окружения (Variables):
+   PORT = 3000
+   NODE_ENV = production
+   JWT_SECRET = ваш-секретный-ключ-минимум-32-символа
+
+7. Нажмите "Deploy"
+8. Скопируйте URL бэкенда (например: https://ptk-water-production.up.railway.app)
+
+🌐 ШАГ 3: РАЗВЕРТЫВАНИЕ ФРОНТЕНДА (Vercel)
+------------------------------------------
+1. Перейдите на https://vercel.com
+2. Войдите через GitHub
+3. Нажмите "New Project"
+4. Выберите репозиторий "ptk-water"
+5. Настройки проекта:
+   - Framework Preset: Vite
+   - Root Directory: ./
+   - Build Command: npm run build
+   - Output Directory: dist
+
+6. Добавьте переменную окружения:
+   VITE_API_URL = [URL вашего бэкенда с Railway]
+
+7. Нажмите "Deploy"
+8. Дождитесь завершения развертывания
+
+✅ ШАГ 4: ТЕСТИРОВАНИЕ
+----------------------
+1. Откройте URL фронтенда в браузере
+2. Попробуйте войти:
+   - Администратор: admin / admin123
+   - Пользователь: user1 / password123
+
+3. Проверьте основные функции:
+   - Вход в систему
+   - Просмотр показаний
+   - Добавление новых показаний (для пользователей)
+   - Административная панель (для админа)
+
+🔄 АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ
+----------------------------
+После настройки каждый git push в main ветку будет:
+- Автоматически обновлять бэкенд на Railway
+- Автоматически обновлять фронтенд на Vercel
+
+📞 ПОДДЕРЖКА
+------------
+При возникновении проблем:
+1. Проверьте логи в Railway Dashboard
+2. Проверьте логи в Vercel Dashboard
+3. Убедитесь, что переменные окружения настроены правильно
+4. Проверьте, что VITE_API_URL указывает на правильный URL бэкенда
+
+🔗 ПОЛЕЗНЫЕ ССЫЛКИ
+------------------
+- GitHub репозиторий: https://github.com/maximaxmaxi018-blip/ptk-water
+- Railway Dashboard: https://railway.app/dashboard
+- Vercel Dashboard: https://vercel.com/dashboard
+- Git для Windows: https://git-scm.com/download/win

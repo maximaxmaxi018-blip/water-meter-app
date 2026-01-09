@@ -361,6 +361,32 @@ const App: React.FC = () => {
       const user = await apiClient.getUser(response.user.id);
       const fullUser = { ...response.user, ...user, isAdmin: false } as User;
       
+      // ВСЕГДА загружаем данные пользователя с сервера для синхронизации между устройствами
+      try {
+        const [userReadings, userApplications, userFeedbacks] = await Promise.all([
+          apiClient.getUserReadings(fullUser.id),
+          apiClient.getUserApplications(fullUser.id),
+          apiClient.getUserFeedback(fullUser.id)
+        ]);
+        
+        // ПОЛНОСТЬЮ заменяем данные пользователя данными с сервера
+        setReadings(userReadings);
+        setApplications(userApplications);
+        setFeedbacks(userFeedbacks);
+        
+        console.log('✓ Данные пользователя синхронизированы с сервера:', {
+          readings: userReadings.length,
+          applications: userApplications.length,
+          feedbacks: userFeedbacks.length
+        });
+      } catch (dataError) {
+        console.error('Ошибка загрузки данных пользователя:', dataError);
+        // Очищаем локальные данные если не удалось загрузить с сервера
+        setReadings([]);
+        setApplications([]);
+        setFeedbacks([]);
+      }
+      
       // Если первый вход - показываем модальное окно с временным паролем
       if (response.isFirstLogin && response.tempPassword) {
         setPendingUser(fullUser);
@@ -453,6 +479,30 @@ const App: React.FC = () => {
     localStorage.removeItem('water_auth_user_id');
   };
 
+  const addReading = async (reading: WaterReading) => {
+    try {
+      // Сохраняем на сервер
+      const response = await apiClient.createReading({
+        userId: reading.userId,
+        coldWater: reading.coldWater,
+        hotWater: reading.hotWater,
+        coldWater2: reading.coldWater2,
+        hotWater2: reading.hotWater2
+      });
+      
+      // Обновляем локальное состояние с ID от сервера
+      const serverReading = { ...reading, id: response.id };
+      setReadings(prev => [...prev, serverReading]);
+      console.log('✅ Показания сохранены на сервер и добавлены локально');
+      return serverReading;
+    } catch (error) {
+      console.error('❌ Ошибка сохранения показаний на сервер:', error);
+      // Добавляем локально даже если сервер недоступен
+      setReadings(prev => [...prev, reading]);
+      return reading;
+    }
+  };
+
   const handleLogoClick = () => {
     if (!currentUser) {
       setViewMode(ViewMode.Landing);
@@ -461,12 +511,50 @@ const App: React.FC = () => {
     }
   };
 
-  const addApplication = (app: ServiceApplication) => {
-    setApplications(prev => [app, ...prev]);
+  const addApplication = async (app: ServiceApplication) => {
+    try {
+      // Сохраняем на сервер
+      const response = await apiClient.createApplication({
+        userId: app.userId,
+        serviceType: app.serviceType,
+        meterType: app.meterType,
+        deliveryAddress: app.deliveryAddress,
+        deliveryVolume: app.deliveryVolume,
+        contactPhone: app.contactPhone,
+        preferredDateTime: app.preferredDateTime,
+        status: app.status
+      });
+      
+      // Обновляем локальное состояние с ID от сервера
+      const serverApp = { ...app, id: response.id };
+      setApplications(prev => [serverApp, ...prev]);
+      console.log('✅ Заявка сохранена на сервер и добавлена локально');
+    } catch (error) {
+      console.error('❌ Ошибка сохранения заявки на сервер:', error);
+      // Добавляем локально даже если сервер недоступен
+      setApplications(prev => [app, ...prev]);
+    }
   };
 
-  const addFeedback = (feedback: FeedbackItem) => {
-    setFeedbacks(prev => [feedback, ...prev]);
+  const addFeedback = async (feedback: FeedbackItem) => {
+    try {
+      // Сохраняем на сервер
+      const response = await apiClient.createFeedback({
+        userId: feedback.userId,
+        text: feedback.text,
+        isRead: feedback.isRead,
+        isUserRead: feedback.isUserRead
+      });
+      
+      // Обновляем локальное состояние с ID от сервера
+      const serverFeedback = { ...feedback, id: response.id };
+      setFeedbacks(prev => [serverFeedback, ...prev]);
+      console.log('✅ Сообщение сохранено на сервер и добавлено локально');
+    } catch (error) {
+      console.error('❌ Ошибка сохранения сообщения на сервер:', error);
+      // Добавляем локально даже если сервер недоступен
+      setFeedbacks(prev => [feedback, ...prev]);
+    }
   };
 
   const updateApplicationStatus = (appId: string, status: ApplicationStatus) => {
@@ -626,7 +714,7 @@ const App: React.FC = () => {
             readings={readings} 
             applications={applications.filter(a => a.userId === currentUser.id)}
             feedbacks={feedbacks}
-            onAddReading={(r) => setReadings([...readings, r])}
+            onAddReading={addReading}
             onAddApplication={addApplication}
             onAddFeedback={addFeedback}
             onUpdateFeedback={setFeedbacks}

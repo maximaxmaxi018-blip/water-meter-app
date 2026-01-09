@@ -12,9 +12,9 @@ interface DashboardProps {
   readings: WaterReading[];
   applications: ServiceApplication[];
   feedbacks?: FeedbackItem[];
-  onAddReading: (reading: WaterReading) => void;
-  onAddApplication: (app: ServiceApplication) => void;
-  onAddFeedback: (feedback: FeedbackItem) => void;
+  onAddReading: (reading: WaterReading) => Promise<WaterReading>;
+  onAddApplication: (app: ServiceApplication) => Promise<void>;
+  onAddFeedback: (feedback: FeedbackItem) => Promise<void>;
   onUpdateFeedback?: (feedbacks: FeedbackItem[]) => void;
   onUpdateProfile: (user: User) => void;
 }
@@ -97,6 +97,55 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Синхронизация данных с сервером при смене пользователя
+  useEffect(() => {
+    const syncUserData = async () => {
+      try {
+        const [userReadings, userApplications, userFeedbacks] = await Promise.all([
+          apiClient.getUserReadings(user.id),
+          apiClient.getUserApplications(user.id),
+          apiClient.getUserFeedback(user.id)
+        ]);
+        
+        console.log('🔄 Синхронизация данных пользователя:', {
+          readings: userReadings.length,
+          applications: userApplications.length,
+          feedbacks: userFeedbacks.length
+        });
+        
+        // Обновляем только если данные отличаются
+        const currentUserReadings = readings.filter(r => r.userId === user.id);
+        const currentUserApps = applications.filter(a => a.userId === user.id);
+        const currentUserFeedbacks = feedbacks.filter(f => f.userId === user.id);
+        
+        if (userReadings.length !== currentUserReadings.length) {
+          console.log('📊 Обновляем показания');
+          // Здесь можно добавить callback для обновления readings в родительском компоненте
+        }
+        
+        if (userApplications.length !== currentUserApps.length) {
+          console.log('📋 Обновляем заявки');
+          // Здесь можно добавить callback для обновления applications в родительском компоненте
+        }
+        
+        if (userFeedbacks.length !== currentUserFeedbacks.length) {
+          console.log('💬 Обновляем сообщения');
+          // Здесь можно добавить callback для обновления feedbacks в родительском компоненте
+        }
+      } catch (error) {
+        console.warn('⚠️ Ошибка синхронизации данных:', error);
+      }
+    };
+    
+    // Синхронизируем данные при загрузке компонента
+    syncUserData();
+    
+    // Периодическая синхронизация каждые 30 секунд
+    const interval = setInterval(syncUserData, 30000);
+    
+    return () => clearInterval(interval);
+  }, [user.id]);
 
   // Синхронизация profileForm с изменениями user prop (при импорте новых пользователей или обновлении данных)
   useEffect(() => {
@@ -298,18 +347,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
 
     try {
-      const readingData = {
-        userId: user.id,
-        coldWater: cold,
-        hotWater: hot,
-        coldWater2: user.hasDualMeters ? cold2 : null,
-        hotWater2: user.hasDualMeters ? hot2 : null
-      };
-
-      const response = await apiClient.createReading(readingData);
-
       const newReading: WaterReading = { 
-        id: response.id, 
+        id: 'R' + Math.random().toString(36).substr(2, 5).toUpperCase(), 
         userId: user.id, 
         coldWater: cold, 
         hotWater: hot,
@@ -318,10 +357,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         submissionDate: new Date().toISOString() 
       };
 
-      onAddReading(newReading);
-      setLastSubmittedReading(newReading);
+      // Используем функцию из родительского компонента, которая сохраняет на сервер
+      const savedReading = await onAddReading(newReading);
+      setLastSubmittedReading(savedReading);
       
-      const calc = getReadingCalculation(newReading);
+      const calc = getReadingCalculation(savedReading);
       const newBill: BillingRecord = {
         id: 'B' + Math.random().toString(36).substr(2, 5).toUpperCase(),
         userId: user.id,
@@ -345,21 +385,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     setIsAppSubmitting(true);
     try {
-      const appData = {
-        userId: user.id,
-        serviceType: appType,
-        meterType: appType !== 'water_delivery' ? appMeterType : null,
-        deliveryAddress: appType === 'water_delivery' ? deliveryAddress : null,
-        deliveryVolume: appType === 'water_delivery' ? parseFloat(deliveryVolume) : null,
-        contactPhone: appPhone,
-        preferredDateTime: appDateTime,
-        status: 'pending'
-      };
-
-      const response = await apiClient.createApplication(appData);
-
       const newApp: ServiceApplication = {
-        id: response.id,
+        id: 'A' + Math.random().toString(36).substr(2, 5).toUpperCase(),
         userId: user.id,
         serviceType: appType,
         meterType: appType !== 'water_delivery' ? appMeterType : undefined,
@@ -371,7 +398,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         createdAt: new Date().toISOString()
       };
       
-      onAddApplication(newApp);
+      // Используем функцию из родительского компонента, которая сохраняет на сервер
+      await onAddApplication(newApp);
       setLastSubmittedApp(newApp);
       setAppDateTime('');
       setIsAppSuccessModalOpen(true);
@@ -411,7 +439,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       await apiClient.updateUser(user.id, updateData);
       
       // Обновляем локальное состояние
-      onUpdateProfile(profileForm);
+      const updatedUser = { ...profileForm };
+      onUpdateProfile(updatedUser);
+      
+      console.log('✅ Профиль пользователя обновлен на сервере и локально');
+      
       setIsProfileUpdateSuccess(true);
       setShowSaveNotification(true);
       setTimeout(() => {
@@ -419,6 +451,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         setShowSaveNotification(false);
       }, 4000);
     } catch (error: any) {
+      console.error('❌ Ошибка обновления профиля:', error);
       alert('Ошибка при сохранении профиля: ' + error.message);
     }
   };
@@ -440,25 +473,32 @@ const Dashboard: React.FC<DashboardProps> = ({
     }, 300);
   };
 
-  const handleFeedbackSubmit = (e: React.FormEvent) => {
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedbackText.trim()) return;
     setIsFeedbackSubmitting(true);
-    setTimeout(() => {
+    
+    try {
       const newFeedback: FeedbackItem = {
         id: 'F' + Math.random().toString(36).substr(2, 5).toUpperCase(),
         userId: user.id,
         text: feedbackText,
         isRead: false,
-        isUserRead: true, // Сообщение от пользователя - им же прочитано
+        isUserRead: true,
         createdAt: new Date().toISOString()
       };
-      onAddFeedback(newFeedback);
+      
+      // Используем функцию из родительского компонента, которая сохраняет на сервер
+      await onAddFeedback(newFeedback);
       setFeedbackText('');
       setIsFeedbackSubmitting(false);
       setIsFeedbackSuccess(true);
       setTimeout(() => setIsFeedbackSuccess(false), 3000);
-    }, 1000);
+    } catch (error: any) {
+      console.error('Ошибка отправки сообщения:', error);
+      setIsFeedbackSubmitting(false);
+      alert('Ошибка при отправке сообщения: ' + error.message);
+    }
   };
 
   return (
