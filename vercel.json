@@ -1,4 +1,35 @@
 {
+<<<<<<< HEAD
+  "version": 2,
+  "name": "water-meter-app",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "@vite_api_url"
+  },
+  "build": {
+    "env": {
+      "VITE_API_URL": "@vite_api_url"
+    }
+  }
+}
+=======
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "env": {
@@ -12,3 +43,4 @@
     }
   ]
 }
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19

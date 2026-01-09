@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Типы ответов
 interface ApiResponse<T> {
@@ -58,7 +58,7 @@ class ApiClient {
 
   // ===== AUTHENTICATION =====
   async login(accountNumber: string, password?: string): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/login', {
+    return this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ accountNumber, password: password || '' }),
     });
@@ -69,7 +69,7 @@ class ApiClient {
     oldPassword: string,
     newPassword: string
   ): Promise<{ message: string }> {
-    return this.request('/auth/change-password', {
+    return this.request('/api/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ accountNumber, oldPassword, newPassword }),
     });
@@ -79,7 +79,7 @@ class ApiClient {
     if (!this.token) return { valid: false, user: null };
     
     try {
-      return await this.request('/auth/verify', {
+      return await this.request('/api/auth/verify', {
         headers: { Authorization: `Bearer ${this.token}` },
       });
     } catch {
@@ -90,29 +90,29 @@ class ApiClient {
 
   // ===== USERS =====
   async getUsers(): Promise<any[]> {
-    return this.request('/users');
+    return this.request('/api/users');
   }
 
   async getUser(id: string): Promise<any> {
-    return this.request(`/users/${id}`);
+    return this.request(`/api/users/${id}`);
   }
 
   async createUser(userData: any): Promise<{ id: string; message: string }> {
-    return this.request('/users', {
+    return this.request('/api/users', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async updateUser(id: string, userData: any): Promise<{ message: string }> {
-    return this.request(`/users/${id}`, {
+    return this.request(`/api/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(userData),
     });
   }
 
   async deleteUser(id: string): Promise<{ message: string }> {
-    return this.request(`/users/${id}`, {
+    return this.request(`/api/users/${id}`, {
       method: 'DELETE',
     });
   }
@@ -127,141 +127,141 @@ class ApiClient {
 
   // ===== READINGS =====
   async getReadings(): Promise<any[]> {
-    return this.request('/readings');
+    return this.request('/api/readings');
   }
 
   async getUserReadings(userId: string): Promise<any[]> {
-    return this.request(`/readings/user/${userId}`);
+    return this.request(`/api/readings/user/${userId}`);
   }
 
   async createReading(readingData: any): Promise<{ id: string; message: string }> {
-    return this.request('/readings', {
+    return this.request('/api/readings', {
       method: 'POST',
       body: JSON.stringify(readingData),
     });
   }
 
   async updateReading(id: string, readingData: any): Promise<{ message: string }> {
-    return this.request(`/readings/${id}`, {
+    return this.request(`/api/readings/${id}`, {
       method: 'PUT',
       body: JSON.stringify(readingData),
     });
   }
 
   async deleteReading(id: string): Promise<{ message: string }> {
-    return this.request(`/readings/${id}`, {
+    return this.request(`/api/readings/${id}`, {
       method: 'DELETE',
     });
   }
 
   // ===== APPLICATIONS =====
   async getApplications(): Promise<any[]> {
-    return this.request('/applications');
+    return this.request('/api/applications');
   }
 
   async getUserApplications(userId: string): Promise<any[]> {
-    return this.request(`/applications/user/${userId}`);
+    return this.request(`/api/applications/user/${userId}`);
   }
 
   async createApplication(appData: any): Promise<{ id: string; message: string }> {
-    return this.request('/applications', {
+    return this.request('/api/applications', {
       method: 'POST',
       body: JSON.stringify(appData),
     });
   }
 
   async updateApplication(id: string, appData: any): Promise<{ message: string }> {
-    return this.request(`/applications/${id}`, {
+    return this.request(`/api/applications/${id}`, {
       method: 'PUT',
       body: JSON.stringify(appData),
     });
   }
 
   async deleteApplication(id: string): Promise<{ message: string }> {
-    return this.request(`/applications/${id}`, {
+    return this.request(`/api/applications/${id}`, {
       method: 'DELETE',
     });
   }
 
   // ===== NEWS =====
   async getNews(): Promise<any[]> {
-    return this.request('/news');
+    return this.request('/api/news');
   }
 
   async getNewsBySettlement(settlement: string): Promise<any[]> {
-    return this.request(`/news/settlement/${settlement}`);
+    return this.request(`/api/news/settlement/${settlement}`);
   }
 
   async createNews(newsData: any): Promise<{ id: string; message: string }> {
-    return this.request('/news', {
+    return this.request('/api/news', {
       method: 'POST',
       body: JSON.stringify(newsData),
     });
   }
 
   async updateNews(id: string, newsData: any): Promise<{ message: string }> {
-    return this.request(`/news/${id}`, {
+    return this.request(`/api/news/${id}`, {
       method: 'PUT',
       body: JSON.stringify(newsData),
     });
   }
 
   async deleteNews(id: string): Promise<{ message: string }> {
-    return this.request(`/news/${id}`, {
+    return this.request(`/api/news/${id}`, {
       method: 'DELETE',
     });
   }
 
   // ===== FEEDBACK =====
   async getFeedback(): Promise<any[]> {
-    return this.request('/feedback');
+    return this.request('/api/feedback');
   }
 
   async getUserFeedback(userId: string): Promise<any[]> {
-    return this.request(`/feedback/user/${userId}`);
+    return this.request(`/api/feedback/user/${userId}`);
   }
 
   async createFeedback(feedbackData: any): Promise<{ id: string; message: string }> {
-    return this.request('/feedback', {
+    return this.request('/api/feedback', {
       method: 'POST',
       body: JSON.stringify(feedbackData),
     });
   }
 
   async updateFeedback(id: string, feedbackData: any): Promise<{ message: string }> {
-    return this.request(`/feedback/${id}`, {
+    return this.request(`/api/feedback/${id}`, {
       method: 'PUT',
       body: JSON.stringify(feedbackData),
     });
   }
 
   async deleteFeedback(id: string): Promise<{ message: string }> {
-    return this.request(`/feedback/${id}`, {
+    return this.request(`/api/feedback/${id}`, {
       method: 'DELETE',
     });
   }
 
   // ===== PLUMBERS =====
   async getPlumbers(): Promise<any[]> {
-    return this.request('/plumbers');
+    return this.request('/api/plumbers');
   }
 
   async createPlumber(plumberData: any): Promise<{ id: string; message: string }> {
-    return this.request('/plumbers', {
+    return this.request('/api/plumbers', {
       method: 'POST',
       body: JSON.stringify(plumberData),
     });
   }
 
   async updatePlumber(id: string, plumberData: any): Promise<{ message: string }> {
-    return this.request(`/plumbers/${id}`, {
+    return this.request(`/api/plumbers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(plumberData),
     });
   }
 
   async deletePlumber(id: string): Promise<{ message: string }> {
-    return this.request(`/plumbers/${id}`, {
+    return this.request(`/api/plumbers/${id}`, {
       method: 'DELETE',
     });
   }

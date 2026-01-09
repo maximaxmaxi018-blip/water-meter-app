@@ -1,12 +1,17 @@
 {
-  "name": "мку-пмо-хозяйственное-управление---питкяранта",
+  "name": "water-meter-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Система учета показаний счетчиков воды",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node backend/server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "react": "^19.2.3",
@@ -21,5 +26,8 @@
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
-  }
+  },
+  "keywords": ["water", "meter", "readings", "management"],
+  "author": "Water Meter System",
+  "license": "MIT"
 }
