@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Типы ответов
 interface ApiResponse<T> {
@@ -58,7 +58,7 @@ class ApiClient {
 
   // ===== AUTHENTICATION =====
   async login(accountNumber: string, password?: string): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/login', {
+    return this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ accountNumber, password: password || '' }),
     });
@@ -69,7 +69,7 @@ class ApiClient {
     oldPassword: string,
     newPassword: string
   ): Promise<{ message: string }> {
-    return this.request('/auth/change-password', {
+    return this.request('/api/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ accountNumber, oldPassword, newPassword }),
     });
@@ -79,7 +79,7 @@ class ApiClient {
     if (!this.token) return { valid: false, user: null };
     
     try {
-      return await this.request('/auth/verify', {
+      return await this.request('/api/auth/verify', {
         headers: { Authorization: `Bearer ${this.token}` },
       });
     } catch {
@@ -90,29 +90,29 @@ class ApiClient {
 
   // ===== USERS =====
   async getUsers(): Promise<any[]> {
-    return this.request('/users');
+    return this.request('/api/users');
   }
 
   async getUser(id: string): Promise<any> {
-    return this.request(`/users/${id}`);
+    return this.request(`/api/users/${id}`);
   }
 
   async createUser(userData: any): Promise<{ id: string; message: string }> {
-    return this.request('/users', {
+    return this.request('/api/users', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async updateUser(id: string, userData: any): Promise<{ message: string }> {
-    return this.request(`/users/${id}`, {
+    return this.request(`/api/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(userData),
     });
   }
 
   async deleteUser(id: string): Promise<{ message: string }> {
-    return this.request(`/users/${id}`, {
+    return this.request(`/api/users/${id}`, {
       method: 'DELETE',
     });
   }
