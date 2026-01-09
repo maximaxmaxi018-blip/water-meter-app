@@ -128,13 +128,7 @@ const App: React.FC = () => {
     }
   });
   
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const savedUserId = localStorage.getItem('water_auth_user_id');
-    if (savedUserId) {
-      return users.find(u => u.id === savedUserId) || null;
-    }
-    return null;
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const savedMode = localStorage.getItem('water_current_view');
@@ -264,33 +258,65 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Отключаем автоматическую проверку сессии
-  // useEffect(() => {
-  //   const checkSession = async () => {
-  //     const token = localStorage.getItem('water_auth_token');
-  //     if (token) {
-  //       try {
-  //         const result = await apiClient.verifyToken();
-  //         if (result.valid && result.user) {
-  //           const user = result.user as User;
-  //           setCurrentUser(user);
-  //           if (user.isAdmin) {
-  //             setViewMode(ViewMode.AdminPanel);
-  //           } else {
-  //             setViewMode(ViewMode.UserDashboard);
-  //           }
-  //         } else {
-  //           apiClient.clearToken();
-  //           localStorage.removeItem('water_auth_user_id');
-  //         }
-  //       } catch (error) {
-  //         apiClient.clearToken();
-  //         localStorage.removeItem('water_auth_user_id');
-  //       }
-  //     }
-  //   };
-  //   checkSession();
-  // }, []);
+  // Проверка сессии при загрузке приложения
+  useEffect(() => {
+    const checkSession = async () => {
+      const token = localStorage.getItem('water_auth_token');
+      const savedUserId = localStorage.getItem('water_auth_user_id');
+      
+      if (token && savedUserId) {
+        try {
+          const result = await apiClient.verifyToken();
+          if (result.valid && result.user) {
+            const user = result.user as User;
+            setCurrentUser(user);
+            
+            // Загружаем актуальные данные пользователя
+            if (!user.isAdmin) {
+              try {
+                const [userReadings, userApplications, userFeedbacks] = await Promise.all([
+                  apiClient.getUserReadings(user.id),
+                  apiClient.getUserApplications(user.id),
+                  apiClient.getUserFeedback(user.id)
+                ]);
+                
+                setReadings(userReadings);
+                setApplications(userApplications);
+                setFeedbacks(userFeedbacks);
+              } catch (dataError) {
+                console.error('Ошибка загрузки данных пользователя:', dataError);
+              }
+            }
+            
+            // Устанавливаем правильный режим просмотра
+            if (user.isAdmin) {
+              setViewMode(ViewMode.AdminPanel);
+            } else {
+              setViewMode(ViewMode.UserDashboard);
+            }
+          } else {
+            // Токен недействителен - очищаем
+            apiClient.clearToken();
+            localStorage.removeItem('water_auth_user_id');
+            setCurrentUser(null);
+            setViewMode(ViewMode.Landing);
+          }
+        } catch (error) {
+          console.error('Ошибка проверки сессии:', error);
+          // При ошибке очищаем сессию
+          apiClient.clearToken();
+          localStorage.removeItem('water_auth_user_id');
+          setCurrentUser(null);
+          setViewMode(ViewMode.Landing);
+        }
+      } else {
+        // Нет токена или ID пользователя
+        setViewMode(ViewMode.Landing);
+      }
+    };
+    
+    checkSession();
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
