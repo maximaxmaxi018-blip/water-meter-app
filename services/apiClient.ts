@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+=======
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19
 
 // Типы ответов
 interface ApiResponse<T> {
@@ -58,7 +62,11 @@ class ApiClient {
 
   // ===== AUTHENTICATION =====
   async login(accountNumber: string, password?: string): Promise<AuthResponse> {
+<<<<<<< HEAD
     return this.request<AuthResponse>('/api/auth/login', {
+=======
+    return this.request<AuthResponse>('/auth/login', {
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19
       method: 'POST',
       body: JSON.stringify({ accountNumber, password: password || '' }),
     });
@@ -69,7 +77,11 @@ class ApiClient {
     oldPassword: string,
     newPassword: string
   ): Promise<{ message: string }> {
+<<<<<<< HEAD
     return this.request('/api/auth/change-password', {
+=======
+    return this.request('/auth/change-password', {
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19
       method: 'POST',
       body: JSON.stringify({ accountNumber, oldPassword, newPassword }),
     });
@@ -79,7 +91,11 @@ class ApiClient {
     if (!this.token) return { valid: false, user: null };
     
     try {
+<<<<<<< HEAD
       return await this.request('/api/auth/verify', {
+=======
+      return await this.request('/auth/verify', {
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19
         headers: { Authorization: `Bearer ${this.token}` },
       });
     } catch {
@@ -90,6 +106,7 @@ class ApiClient {
 
   // ===== USERS =====
   async getUsers(): Promise<any[]> {
+<<<<<<< HEAD
     return this.request('/api/users');
   }
 
@@ -99,20 +116,39 @@ class ApiClient {
 
   async createUser(userData: any): Promise<{ id: string; message: string }> {
     return this.request('/api/users', {
+=======
+    return this.request('/users');
+  }
+
+  async getUser(id: string): Promise<any> {
+    return this.request(`/users/${id}`);
+  }
+
+  async createUser(userData: any): Promise<{ id: string; message: string }> {
+    return this.request('/users', {
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async updateUser(id: string, userData: any): Promise<{ message: string }> {
+<<<<<<< HEAD
     return this.request(`/api/users/${id}`, {
+=======
+    return this.request(`/users/${id}`, {
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19
       method: 'PUT',
       body: JSON.stringify(userData),
     });
   }
 
   async deleteUser(id: string): Promise<{ message: string }> {
+<<<<<<< HEAD
     return this.request(`/api/users/${id}`, {
+=======
+    return this.request(`/users/${id}`, {
+>>>>>>> ba2a6083e025fd17ad561633e28a0fe7cee17b19
       method: 'DELETE',
     });
   }
