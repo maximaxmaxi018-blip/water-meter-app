@@ -1,25 +1,24 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>МКУ ПМО Хозяйственное управление - Питкяранта</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><path fill=%22%230ea5e9%22 d=%22M256 512C141.1 512 48 418.9 48 304c0-41.6 12.3-80.3 33.4-112.5C118.8 135 186.9 61.6 238.1 11.2c10.4-10.2 25.4-10.2 35.8 0 51.2 50.4 119.3 123.8 156.7 180.3 21.1 32.2 33.4 70.9 33.4 112.5 0 114.9-93.1 208-208 208z%22/></svg>">
-    <script>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>МКУ ПМО Хозяйственное управление</title>
+    <script type="text/javascript">
       // Single Page Apps for GitHub Pages
+      // MIT License
       // https://github.com/rafgraph/spa-github-pages
-      (function(l) {
-        if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
-          }).join('?')
-          window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + decoded + l.hash
-          )
-        }
-      }(window.location))
+      var pathSegmentsToKeep = 1;
+
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
     </script>
-</head>
-<body>
-</body>
+  </head>
+  <body>
+  </body>
 </html>

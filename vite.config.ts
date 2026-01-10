@@ -5,6 +5,10 @@ export default defineConfig({
   plugins: [react()],
   base: '/water-meter-app/',
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    assetsDir: 'assets'
+  },
+  server: {
+    port: 3000
   }
 })
