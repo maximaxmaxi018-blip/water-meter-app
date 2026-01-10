@@ -5,6 +5,15 @@ export default defineConfig({
   plugins: [react()],
   base: process.env.NODE_ENV === 'production' ? '/water-meter-app/' : '/',
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          charts: ['recharts']
+        }
+      }
+    }
   }
 })

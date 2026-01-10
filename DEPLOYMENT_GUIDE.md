@@ -6,8 +6,8 @@
 2. Назовите его (например: `water-meter-app`)
 3. Инициализируйте Git локально:
 
-```bash
-cd "c:\Users\Макс\Desktop\Ладога Строй\Счетчик воды\Вариант 2"
+```powershell
+Set-Location "c:\Users\Макс\Desktop\Ладога Строй\Счетчик воды\Вариант 2"
 git init
 git add .
 git commit -m "Initial commit"
@@ -78,7 +78,7 @@ jobs:
 ```
 
 4. Сделайте commit и push:
-```bash
+```powershell
 git add .
 git commit -m "Add GitHub Pages deployment"
 git push

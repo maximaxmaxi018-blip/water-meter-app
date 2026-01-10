@@ -1,70 +1,37 @@
 @echo off
-chcp 65001 >nul
-echo 🚀 Начинаем автоматический деплой проекта...
+echo ========================================
+echo    РАЗВЕРТЫВАНИЕ СЧЕТЧИКА ВОДЫ
+echo ========================================
+echo.
 
-REM Проверяем наличие Node.js
-node --version >nul 2>&1
+echo 1. Установка зависимостей...
+call npm install
 if %errorlevel% neq 0 (
-    echo ❌ Node.js не найден. Установите Node.js и повторите попытку.
+    echo ОШИБКА: Не удалось установить зависимости
     pause
     exit /b 1
 )
 
-REM Проверяем наличие npm
-npm --version >nul 2>&1
+echo.
+echo 2. Сборка проекта...
+call npm run build
 if %errorlevel% neq 0 (
-    echo ❌ npm не найден. Установите npm и повторите попытку.
+    echo ОШИБКА: Не удалось собрать проект
     pause
     exit /b 1
 )
 
-echo ✅ Node.js и npm найдены
-
-REM Инициализируем Git если его нет
-if not exist ".git" (
-    echo 📦 Инициализируем Git репозиторий...
-    git init
-    git add .
-    git commit -m "Initial commit: Water meter management system"
-)
-
-REM Устанавливаем зависимости
-echo 📦 Устанавливаем зависимости фронтенда...
-npm install
-
-echo 📦 Устанавливаем зависимости бэкенда...
-cd backend
-npm install
-cd ..
-
-REM Устанавливаем CLI инструменты
-echo 📦 Устанавливаем Vercel CLI...
-npm install -g vercel
-
-echo 📦 Устанавливаем Railway CLI...
-npm install -g @railway/cli
-
-REM Создаем .vercelignore
-echo backend/> .vercelignore
-echo *.db>> .vercelignore
-echo .env>> .vercelignore
-echo .env.local>> .vercelignore
-echo node_modules/>> .vercelignore
-echo .git/>> .vercelignore
-
-echo 🚀 Деплоим на Vercel...
-echo Следуйте инструкциям для входа в Vercel
-vercel --prod
-
-echo 🚀 Деплоим на Railway...
-echo Следуйте инструкциям для входа в Railway
-railway login
-railway up
-
-echo 🎉 Деплой завершен!
-echo 📋 Не забудьте:
-echo 1. Скопировать URL бэкенда из Railway
-echo 2. Обновить VITE_API_URL в настройках Vercel
-echo 3. Перезапустить деплой фронтенда
-
-pause
+echo.
+echo ========================================
+echo    СБОРКА ЗАВЕРШЕНА УСПЕШНО!
+echo ========================================
+echo.
+echo Файлы готовы для развертывания в папке 'dist'
+echo.
+echo Следующие шаги:
+echo 1. Загрузите код в GitHub репозиторий
+echo 2. Настройте GitHub Pages
+echo 3. Для локального тестирования запустите: serve-local.bat
+echo.
+echo Нажмите любую клавишу для выхода...
+pause >nul
